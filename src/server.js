@@ -1,0 +1,36 @@
+import express from 'express';
+import { default as routes } from '@/routes/index.routes';
+import { webSocketDataClient, webSocketCommandClient } from '@/utils/webSocket';
+import http from 'http';
+import WebSocket from 'ws';
+import dotenv from 'dotenv';
+import mongoose from 'mongoose';
+
+dotenv.config({ path: '.env' });
+
+const app = express();
+const server = http.createServer(app);
+const PORT = process.env.PORT || 3000;
+
+webSocketDataClient(new WebSocket(process.env.WSS_DATA_ADDRESS));
+webSocketCommandClient(new WebSocket(process.env.WSS_COMMAND_ADDRESS));
+
+app.get("/", (req, res) => {
+  res.status(200)
+    .json({
+      message: "I am alive and watching the world burn!!!"
+    });
+});
+
+app.use("/api", routes);
+
+mongoose.connect(process.env.MONGO_DB_URI, { keepAlive: true, connectTimeOutMS: 3000 }, () => {
+  mongoose.Connection.on("connected", () => {
+    console.log("Mongodb successfully connected!!")
+    server.listen(PORT, () => {
+      console.log("Server is running at port " + PORT);
+    });
+  });
+}).catch((err) => {
+  console.log(`Error connecting to mongodb: ${err}`);
+});
