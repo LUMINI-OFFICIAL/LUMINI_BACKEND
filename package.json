@@ -1,0 +1,38 @@
+{
+  "name": "LUMINI_BACKEND",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "npm run clean && npm run babel-build && npm run copy",
+    "babel-build": "babel -d ./dist ./src -s",
+    "clean": "rm -rf dist && mkdir dist",
+    "copy": "babel src --out-dir ./dist --copy-files",
+    "dev": "nodemon --exec babel-node ./src/server.js",
+    "start": "node ./dist/server.js",
+    "test": "echo \"Hello there!\" && exit 1"
+  },
+  "author": "QuintusJoyal",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "1.6.7",
+    "bcrypt": "5.1.1",
+    "express": "4.18.3",
+    "http-errors": "2.0.0",
+    "mongoose": "8.2.1",
+    "ws": "8.16.0"
+  },
+  "devDependencies": {
+    "@babel/cli": "7.23.9",
+    "@babel/core": "7.24.0",
+    "@babel/eslint-parser": "7.23.10",
+    "@babel/node": "7.23.9",
+    "@babel/preset-env": "7.24.0",
+    "babel-plugin-module-resolver": "5.0.0",
+    "dotenv": "16.4.5",
+    "eslint": "8.57.0",
+    "eslint-plugin-import": "2.29.1",
+    "nodemon": "3.1.0",
+    "prettier": "3.2.5"
+  }
+}
