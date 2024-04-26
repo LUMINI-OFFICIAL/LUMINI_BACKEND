@@ -2,14 +2,13 @@ const mongoose = require('mongoose');
 
 // Define Outlet Schema
 const outletSchema = new mongoose.Schema({
-  name: { type: String, required: true },
+  name: { type: String, required: true, unique: true },
   state: { type: Boolean, default: false },
   roomId: { type: mongoose.Schema.Types.ObjectId, ref: 'Room' },
   moduleType: { type: String, required: true },
   moduleConfig: { 
     type: mongoose.Schema.Types.ObjectId, 
-    refPath: 'moduleType',
-    required: true
+    refPath: 'moduleType'
   } // Configuration of the module connected to the outlet (raw JSON)
 });
 

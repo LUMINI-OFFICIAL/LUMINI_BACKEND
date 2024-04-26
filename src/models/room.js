@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 // Define Room Schema
 const roomSchema = new mongoose.Schema({
-  name: { type: String, required: true },
+  name: { type: String, required: true, unique: true },
   switches: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Switch' }],
   outlets: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Outlet' }]
 });

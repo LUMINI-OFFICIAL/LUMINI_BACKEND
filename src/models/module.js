@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 // Define Module Schema
 const moduleSchema = new mongoose.Schema({
-  name: { type: String, required: true },
+  name: { type: String, required: true, unique: true },
   description: { type: String }
 });
 

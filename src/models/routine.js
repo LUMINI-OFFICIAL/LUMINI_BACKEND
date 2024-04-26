@@ -2,23 +2,29 @@ const mongoose = require('mongoose');
 
 // Define Routine Schema
 const routineSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  description: { type: String },
-  routineType: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'RoutineType', required: true 
-  }, // Reference to the routine type
+  name: { type: String, required: true, unique: true },
   actions: [{
-    type: {
+    state: { type: Boolean, default: true },
+    target: {
       type: String,
-      enum: ['switch', 'outlet'], // Type of action (switch or outlet)
+      enum: ['switch', 'outlet'], // Target (switch or outlet)
       required: true
     },
-    deviceId: { 
+    targetId: { 
       type: mongoose.Schema.Types.ObjectId, 
       required: true 
     }, // ID of the device (switch or outlet)
-  }]
+  }],
+  schedule: {
+    startTime: { type: String, required: true },
+    endTime: { type:String, required: true },
+    days: [{
+      type: String,
+      enum: ['monday', 'tuesday', 'wednesday',
+       'thursday', 'friday', 'saturday', 'sunday'],
+      required: true
+    }]
+  }
 });
 
 // Define Routine Model

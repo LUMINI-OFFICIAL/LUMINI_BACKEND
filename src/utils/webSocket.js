@@ -1,4 +1,7 @@
-export const webSocketCommandClient = (client) => {
+import WebSocket from "ws";
+
+export const webSocketCommandClient = (clientAddress) => {
+  const client = new WebSocket(clientAddress);
   client.on('open', () => {
     console.log('WebSocket connection to server opened');
   
@@ -8,9 +11,13 @@ export const webSocketCommandClient = (client) => {
       console.log('Hello');
     }, 5000);
   });
+  client.on('error', (err) => {
+    console.log(err);
+  });
 };
 
-export const webSocketDataClient = (client) => {
+export const webSocketDataClient = (clientAddress) => {
+  const client = new WebSocket(clientAddress);
   client.on('open', () => {
     console.log('WebSocket connection to server opened');
   
@@ -24,5 +31,8 @@ export const webSocketDataClient = (client) => {
   
   client.on('close', () => {
     console.log('WebSocket connection to server closed');
+  });
+  client.on('error', (err) => {
+    console.log(err);
   });
 };
