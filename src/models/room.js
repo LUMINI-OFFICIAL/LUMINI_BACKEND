@@ -1,13 +1,17 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 // Define Room Schema
 const roomSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  switches: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Switch' }],
+  name: { type: String, required: true, unique: true },
+  switches: [{ 
+    type: mongoose.Schema.Types.ObjectId, ref: 'Switch' }],
   outlets: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Outlet' }]
 });
 
-// Define Room Model
-const Room = mongoose.model('Room', roomSchema);
+const getRoomModel = async (tenant) => {
+  let dbName = "lumini_" + tenant;
+  let db = await mongoose.connection.useDb(dbName).asPromise();
+  return db.model('Room', roomSchema);
+};
 
-module.exports = Room;
+export default getRoomModel;

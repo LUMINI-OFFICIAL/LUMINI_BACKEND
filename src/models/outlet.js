@@ -1,19 +1,21 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 // Define Outlet Schema
 const outletSchema = new mongoose.Schema({
-  name: { type: String, required: true },
+  name: { type: String, required: true, unique: true },
   state: { type: Boolean, default: false },
   roomId: { type: mongoose.Schema.Types.ObjectId, ref: 'Room' },
   moduleType: { type: String, required: true },
   moduleConfig: { 
     type: mongoose.Schema.Types.ObjectId, 
-    refPath: 'moduleType',
-    required: true
+    refPath: 'moduleType'
   } // Configuration of the module connected to the outlet (raw JSON)
 });
 
-// Define Outlet Model
-const Outlet = mongoose.model('Outlet', outletSchema);
+const getOutletModel = async (tenant) => {
+  let dbName = "lumini_" + tenant;
+  let db = await mongoose.connection.useDb(dbName).asPromise();
+  return db.model('Outlet', outletSchema);
+};
 
-module.exports = Outlet;
+export default getOutletModel;
