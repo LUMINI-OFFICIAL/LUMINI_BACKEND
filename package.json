@@ -10,6 +10,7 @@
     "copy": "babel src --out-dir ./dist --copy-files",
     "dev": "nodemon --exec babel-node ./src/server.js",
     "start": "node ./dist/server.js",
+    "ws-server": "sudo node ./utils/WebSocketServer.js",
     "test": "echo \"Hello there!\" && exit 1"
   },
   "author": "QuintusJoyal",

@@ -1,20 +1,31 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 // Middleware function to authenticate and authorize requests
 const authenticateToken = (req, res, next) => {
-  const token = req.headers['authorization'];
+  const token = req.query.token || req.headers['authorization'].split(' ')[1];
 
   if (!token) {
-    return res.status(401).json({ error: 'Authentication token is required' });
+    if (res) {
+      return res.status(401).json({ message: 'No token provided' });
+    } else {
+      return next(new Error('No token provided'));
+    }
   }
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) {
-      return res.status(403).json({ error: 'Invalid or expired token' });
+      if (res) {
+        return res.status(401).json({ message: 'Failed to authenticate token' });
+      } else {
+        return next(new Error('Failed to authenticate token'));
+      }
     }
     req.user = user;
-    next();
+    if (next) next();
   });
 };
 

@@ -1,16 +1,47 @@
 import mongoose from 'mongoose';
 import createError from 'http-errors';
-import Room from '@/models/room';
 import { makeResponse } from '@/utils/response';
+import getRoomModel from '@/models/room';
 
 export const addRoom = async ( req, res ) => {
   try {
-    const { name, switches, outlets } = req.body;
+    let { name, switches, outlets } = req.body;
+    const Room = await getRoomModel(req.user.userId);
+    if (name == "New Room") {
+      let count = (await Room.countDocuments() + 1).toLocaleString();
+      name += " " + count;
+    }
     const newRoom = new Room({ name, switches, outlets });
     await newRoom.save();
-    makeResponse({res, status: 201, data: newRoom});
+    return makeResponse({res, status: 201, data: newRoom});
   } catch (err) {
+    console.error(err.message);
     createError[400, err.message];
+  }
+};
+
+export const fetchRoomData = async (userId, roomId) => {
+  try {
+    const Room = await getRoomModel(userId);
+
+    // If an ID is provided, filter rooms by ID
+    if (roomId) {
+      const room = await Room.findById(roomId)
+          .populate([
+            { path: 'switches' },
+            { path: 'outlets', populate: { path: 'moduleConfig' }}
+          ]);
+      if (!room) {
+        return;
+      }
+      return room;
+    }
+
+    // If no ID is provided, retrieve all rooms
+    const rooms = await Room.find();
+    return rooms;
+  } catch (err) {
+    console.error(err.message);
   }
 };
 
@@ -18,26 +49,12 @@ export const getRoom = async ( req, res ) => {
   try {
     const { id } = req.query;
 
-    // If an ID is provided, filter rooms by ID
-    if (id) {
-      const room = await Room.findById(id)
-          .populate([
-            { path: 'switches' },
-            { path: 'outlets', populate: { path: 'moduleConfig' }}
-          ]);
-      if (!room) {
-        createError[404, "Room not found"];
-        return;
-      }
-      makeResponse({res, data: room});
-      return;
-    }
+    const data = await fetchRoomData(req.user.userId, id);
 
-    // If no ID is provided, retrieve all rooms
-    const rooms = await Room.find();
-    makeResponse({res, data: rooms});
+    return makeResponse({res, data});
   } catch (err) {
-    createError[500, "Internal server error" ];
+    console.error(err.message);
+    return createError[500, "Internal server error" ];
   }
 };
 
@@ -45,6 +62,8 @@ export const updateRoom = async (req, res) => {
   try {
     const { id } = req.params;
     const { name, switchId, outletId } = req.body;
+
+    const Room = await getRoomModel(req.user.userId);
 
     // Validate that the provided room ID is a valid ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -115,6 +134,8 @@ export const updateRoom = async (req, res) => {
 export const removeRoom = async (req, res) => {
   try {
     const { id } = req.params;
+
+    const Room = await getRoomModel(req.user.userId);
 
     // Validate that the provided room ID is a valid ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {

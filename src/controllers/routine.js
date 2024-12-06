@@ -1,49 +1,65 @@
 import mongoose from 'mongoose';
-import Routine from "@/models/routine";
-import createError from "http-errors";
+import getRoutineModel from '@/models/routine';
 import { makeResponse } from "@/utils/response";
+
+export const fetchRoutineData = async (userId) => {
+  try {
+    const Routine = await getRoutineModel(userId);
+    const routines = await Routine.find();
+    return routines;
+  } catch (err) {
+    console.error(err);
+  }
+};
 
 export const getRoutine = async (req, res) => {
   try {
-    const routines = await Routine.find();
-    makeResponse({ res, data: routines });
+    const routines = await fetchRoutineData(req.user.userId);
+    return makeResponse({ res, data: routines });
   } catch (err) {
-    console.error(err);
-    createError(500, "Internal server error");
+    return makeResponse({res, status: 500, message: "Internal server error"});
   }
 };
 
 export const addRoutine = async (req, res) => {
   try {
-    const { name, actions, schedule } = req.body;
-    const newRoutine = new Routine({ name, actions, schedule });
+    let { name, state, actions, schedule } = req.body;
+    const Routine = await getRoutineModel(req.user.userId);
+    if (name == "Preset") {
+      let count = (await Routine.countDocuments() + 1).toLocaleString();
+      name += " " + count;
+    }
+    const newRoutine = new Routine({ name, state, actions, schedule });
     await newRoutine.save();
-    makeResponse({ res, data: newRoutine, status: 201 });
+    return makeResponse({ res, data: newRoutine, status: 201 });
   } catch (err) {
     console.error(err);
-    createError(500, "Internal server error");
+    return makeResponse({res, status: 500, message: "Internal server error"});
   }
 };
 
 export const updateRoutine = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, actions, schedule } = req.body;
-
+    const { name, state, actions, schedule } = req.body;
+    const Routine = await getRoutineModel(req.user.userId);
     // Validate that the provided routine ID is a valid ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      throw createError(400, "Invalid routine ID");
+      return makeResponse({res, status: 400, message: "Invalid routine ID"});
     }
 
     // Check if the routine with the provided ID exists
     const existingRoutine = await Routine.findById(id);
     if (!existingRoutine) {
-      throw createError(404, "Routine not found");
+      return makeResponse({res, status: 404, message: "Routine not found"});
     }
 
     // Update routine fields
     if (name) {
       existingRoutine.name = name;
+    }
+    if (state) {
+      existingRoutine.state = state;
     }
     if (actions) {
       existingRoutine.actions = actions;
@@ -56,35 +72,34 @@ export const updateRoutine = async (req, res) => {
     await existingRoutine.save();
 
     // Respond with the updated routine
-    makeResponse({ res, data: existingRoutine });
+    return makeResponse({ res, data: existingRoutine });
   } catch (err) {
-    console.error(err);
-    createError(500, "Internal server error");
+    return makeResponse({res, status: 500, message: "Internal server error"});
   }
 };
 
 export const removeRoutine = async (req, res) => {
   try {
     const { id } = req.params;
+    const Routine = await getRoutineModel(req.user.userId);
 
     // Validate that the provided routine ID is a valid ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      throw createError(400, "Invalid routine ID");
+      return makeResponse({res, status: 400, message: "Invalid routine ID"});
     }
 
     // Check if the routine with the provided ID exists
     const existingRoutine = await Routine.findById(id);
     if (!existingRoutine) {
-      throw createError(404, "Routine not found");
+      return makeResponse({res, status: 404, message: "Routine not found"});
     }
 
     // Remove the routine
     await Routine.findByIdAndDelete(id);
 
     // Respond with success message
-    makeResponse({ res, message: "Routine deleted successfully" });
+    return makeResponse({ res, message: "Routine deleted successfully" });
   } catch (err) {
-    console.error(err);
-    createError(500, "Internal server error");
+    return makeResponse({res, status: 500, message: "Internal server error"});
   }
 };

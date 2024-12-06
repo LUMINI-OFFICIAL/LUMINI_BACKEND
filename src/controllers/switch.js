@@ -1,32 +1,52 @@
 import mongoose from 'mongoose';
-import createError from 'http-errors';
-import Switch from '@/models/switch';
-import Room from '@/models/room';
 import { makeResponse } from '@/utils/response';
+import getSwitchModel from '@/models/switch';
+import getRoomModel from '@/models/room';
 
-export const getSwitch = () => {
+export const getSwitch = async ( req, res ) => {
+  try {
+    const { id } = req.query;
+    const Switch = await getSwitchModel(req.user.userId);
 
+    // If an ID is provided, filter Switchs by ID
+    if (id) {
+      const Switch = await Switch.findById(id);
+      if (!Switch) {
+        return makeResponse({res, status: 404, message: "Switch not found"});
+      }
+      return makeResponse({ res, data: Switch });
+    }
+
+    // If no ID is provided, retrieve all Switchs
+    const Switchs = await Switch.find();
+    return makeResponse({ res, data: Switchs });
+  } catch (err) {
+    return makeResponse({res, status: 500, message: "Internal server error" });
+  }
 };
 
 export const addSwitch = async ( req, res ) => {
   try {
     const { name, state, roomId } = req.body;
+    const Switch = await getSwitchModel(req.user.userId);
+    const Room = await getRoomModel(req.user.userId);
+
     const newSwitch = new Switch({ name, state, roomId });
     await newSwitch.save();
     
     // Check if the room with the provided ID exists
     const room = await Room.findById(roomId);
     if (!room) {
-      throw createError(404, "Room not found");
+      return makeResponse({res, status: 404, message: "Room not found"});
     }
     
     // Add the switch ID to the room's switches array
     room.switches.push(newSwitch.__id);
     await room.save();
 
-    makeResponse({res, status: 201, data: newSwitch});
+    return makeResponse({res, status: 201, data: newSwitch});
   } catch (err) {
-    createError[400, err.message];
+    return makeResponse({res, status: 500, message: "Internal Server Error"});
   }
 };
 
@@ -35,15 +55,18 @@ export const updateSwitch = async ( req, res ) => {
     const { id } = req.params;
     const { name, state, roomId } = req.body;
 
+    const Switch = await getSwitchModel(req.user.userId);
+    const Room = await getRoomModel(req.user.userId);
+
     // Validate that the provided switch ID is a valid ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      throw createError[400, "Invalid switch ID" ];
+      return makeResponse({res, status: 400, message: "Invalid switch ID"});
     }
 
     // Check if the switch with the provided ID exists
     const existingSwitch = await Switch.findById(id);
     if (!existingSwitch) {
-      throw createError[404, "Switch not found" ];
+      return makeResponse({res, status: 404, message: "Switch not found"});
     }
 
     // Update switch fields
@@ -62,13 +85,13 @@ export const updateSwitch = async ( req, res ) => {
       
       // Check if the provided roomId is a valid ObjectId
       if (!mongoose.Types.ObjectId.isValid(roomId)) {
-        throw createError[400, "Invalid room ID"];
+        return makeResponse({res, status: 400, message: "Invalid room ID"});
       }
       
       // Check if the room with the provided ID exists
       const room = await Room.findById(roomId);
       if (!room) {
-        throw createError[404, "Room not found"];
+        return makeResponse({res, status: 404, message: "Room not found"});
       }
 
       // If the switch was associated with a previous room, remove its ID from that room's switches array
@@ -91,13 +114,25 @@ export const updateSwitch = async ( req, res ) => {
     await existingSwitch.save();
     
     // Respond with the updated switch
-    makeResponse({res, data: existingSwitch});
+    return makeResponse({res, data: existingSwitch});
   } catch (err) {
     console.error(err);
-    createError[500, "Internal server error" ];
+    return makeResponse({res, status: 500, message: "Internal server error"});
   }
 };
 
-export const removeSwitch = () => {
+export const removeSwitch = async ( req, res ) => {
+  try {
+    const { id } = req.params;
+    const Switch = await getSwitchModel(req.user.userId);
+    
+    const deletedSwitch = await Switch.findByIdAndDelete(id);
 
+    if (!deletedSwitch) {
+      return makeResponse({ res, status: 404, message: "Switch not found" });
+    }
+    return makeResponse({ res, message: "Switch deleted successfully" });
+  } catch (err) {
+    return makeResponse({ res, status: 500, message: "Internal server error" });
+  }
 };

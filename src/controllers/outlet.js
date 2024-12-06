@@ -1,41 +1,40 @@
 import mongoose from 'mongoose';
-import Outlet from "@/models/outlet";
-import createError from "http-errors";
+import getOutletModel from '@/models/outlet';
 import { makeResponse } from "@/utils/response";
 
 export const getOutlet = async (req, res) => {
   try {
     const { id } = req.query;
+    const Outlet = await getOutletModel(req.user.userId);
 
     // If an ID is provided, filter outlets by ID
     if (id) {
       const outlet = await Outlet.findById(id)
           .populate({ path: 'moduleConfig' });
       if (!outlet) {
-        createError[404, "Outlet not found"];
-        return;
+        return makeResponse({res, status: 404, message: "Outlet not found"});
       }
-      makeResponse({ res, data: outlet });
-      return;
+      return makeResponse({ res, data: outlet });
     }
 
     // If no ID is provided, retrieve all outlets
     const outlets = await Outlet.find();
-    makeResponse({ res, data: outlets });
+    return makeResponse({ res, data: outlets });
   } catch (err) {
-    createError[500, "Internal server error" ];
+    return makeResponse({res, status: 500, message: "Internal server error" });
   }
 };
 
 export const addOutlet = async (req, res) => {
   try {
     const { name, state, roomId, moduleType, moduleConfig } = req.body;
+    const Outlet = await getOutletModel(req.user.userId);
+
     const outlet = new Outlet({ name, state, roomId, moduleType, moduleConfig });
     await outlet.save();
-    makeResponse({ res, status: 201, data: outlet });
+    return makeResponse({ res, status: 201, data: outlet });
   } catch (err) {
-    console.error(err);
-    makeResponse({ res, status: 500, message: "Internal server error" });
+    return makeResponse({ res, status: 500, message: "Internal server error" });
   }
 };
 
@@ -43,16 +42,17 @@ export const updateOutlet = async (req, res) => {
   try {
     const { id } = req.params;
     const { name, state, roomId, moduleType, moduleConfig } = req.body;
+    const Outlet = await getOutletModel(req.user.userId);
 
     // Validate that the provided outlet ID is a valid ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      throw createError(400, "Invalid outlet ID");
+      return makeResponse({res, status: 400, message: "Invalid outlet ID"});
     }
 
     // Check if the outlet with the provided ID exists
     const existingOutlet = await Outlet.findById(id);
     if (!existingOutlet) {
-      throw createError(404, "Outlet not found");
+      return makeResponse({res, status: 404, message: "Outlet not found"});
     }
 
     // Update outlet fields
@@ -71,13 +71,13 @@ export const updateOutlet = async (req, res) => {
 
       // Check if the provided roomId is a valid ObjectId
       if (!mongoose.Types.ObjectId.isValid(roomId)) {
-        throw createError(400, "Invalid room ID");
+        return makeResponse({res, status: 400, message: "Invalid room ID"});
       }
 
       // Check if the room with the provided ID exists
       const room = await Room.findById(roomId);
       if (!room) {
-        throw createError(404, "Room not found");
+        return makeResponse({res, status: 404, message: "Room not found"});
       }
 
       // If the outlet was associated with a previous room, remove its ID from that room's outlets array
@@ -101,7 +101,7 @@ export const updateOutlet = async (req, res) => {
       // Check if the provided moduleType is valid by querying the Module model
       const module = await Module.findOne({ type: moduleType });
       if (!module) {
-        throw createError(400, "Invalid moduleType");
+        return makeResponse({res, status: 400, message: "Invalid moduleType"});
       }
 
       existingOutlet.moduleType = moduleType;
@@ -119,13 +119,13 @@ export const updateOutlet = async (req, res) => {
           if (isValidConfig) {
             existingOutlet.moduleConfig = moduleConfig;
           } else {
-            throw createError(400, "Invalid moduleConfig");
+            return makeResponse({res, status: 400, message: "Invalid moduleConfig"});
           }
         } else {
-          throw createError(400, "Invalid moduleConfig");
+          return makeResponse({res, status: 400, message: "Invalid moduleConfig"});
         }
       } else {
-        throw createError(400, "moduleConfig is required");
+        return makeResponse({res, status: 400, message: "moduleConfig is required"});
       }
     }
 
@@ -133,24 +133,24 @@ export const updateOutlet = async (req, res) => {
     await existingOutlet.save();
 
     // Respond with the updated outlet
-    makeResponse({ res, data: existingOutlet });
+    return makeResponse({ res, data: existingOutlet });
   } catch (err) {
-    console.error(err);
-    createError(500, "Internal server error");
+    return makeResponse({res, status: 500, message: "Internal server error"});
   }
 };
 
 export const removeOutlet = async (req, res) => {
   try {
     const { id } = req.params;
+    const Outlet = await getOutletModel(req.user.userId);
+    
     const deletedOutlet = await Outlet.findByIdAndDelete(id);
+
     if (!deletedOutlet) {
-      makeResponse({ res, status: 404, message: "Outlet not found" });
-      return;
+      return makeResponse({ res, status: 404, message: "Outlet not found" });
     }
-    makeResponse({ res, message: "Outlet deleted successfully" });
+    return makeResponse({ res, message: "Outlet deleted successfully" });
   } catch (err) {
-    console.error(err);
-    makeResponse({ res, status: 500, message: "Internal server error" });
+    return makeResponse({ res, status: 500, message: "Internal server error" });
   }
 };

@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 // Define Outlet Schema
 const outletSchema = new mongoose.Schema({
@@ -12,7 +12,10 @@ const outletSchema = new mongoose.Schema({
   } // Configuration of the module connected to the outlet (raw JSON)
 });
 
-// Define Outlet Model
-const Outlet = mongoose.model('Outlet', outletSchema);
+const getOutletModel = async (tenant) => {
+  let dbName = "lumini_" + tenant;
+  let db = await mongoose.connection.useDb(dbName).asPromise();
+  return db.model('Outlet', outletSchema);
+};
 
-module.exports = Outlet;
+export default getOutletModel;

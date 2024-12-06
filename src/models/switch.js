@@ -7,7 +7,10 @@ const switchSchema = new mongoose.Schema({
   roomId: { type: mongoose.Schema.Types.ObjectId, ref: 'Room' }
 });
 
-// Define Switch Model
-const Switch = mongoose.model('Switch', switchSchema);
+const getSwitchModel = async (tenant) => {
+  let dbName = "lumini_" + tenant;
+  let db = await mongoose.connection.useDb(dbName).asPromise();
+  return db.model('Switch', switchSchema);
+};
 
-module.exports = Switch;
+export default getSwitchModel;

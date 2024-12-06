@@ -1,10 +1,10 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 // Define Routine Schema
-const routineSchema = new mongoose.Schema({
+export const routineSchema = new mongoose.Schema({
   name: { type: String, required: true, unique: true },
+  state: { type: Boolean, default: false },
   actions: [{
-    state: { type: Boolean, default: true },
     target: {
       type: String,
       enum: ['switch', 'outlet'], // Target (switch or outlet)
@@ -12,22 +12,30 @@ const routineSchema = new mongoose.Schema({
     },
     targetId: { 
       type: mongoose.Schema.Types.ObjectId, 
-      required: true 
+      refPath: 'target'
     }, // ID of the device (switch or outlet)
   }],
   schedule: {
     startTime: { type: String, required: true },
-    endTime: { type:String, required: true },
+    endTime: { type: String, required: true },
     days: [{
       type: String,
       enum: ['monday', 'tuesday', 'wednesday',
        'thursday', 'friday', 'saturday', 'sunday'],
       required: true
-    }]
+    }],
+    moduleType: { type: String, required: true },
+    moduleConfig: { 
+      type: mongoose.Schema.Types.ObjectId, 
+      refPath: 'moduleType'
+    }
   }
 });
 
-// Define Routine Model
-const Routine = mongoose.model('Routine', routineSchema);
+const getRoutineModel = async (tenant) => {
+  let dbName = "lumini_" + tenant;
+  let db = await mongoose.connection.useDb(dbName).asPromise();
+  return db.model('Routine', routineSchema);
+};
 
-module.exports = Routine;
+export default getRoutineModel;

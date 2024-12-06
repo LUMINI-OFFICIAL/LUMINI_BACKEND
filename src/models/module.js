@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 // Define Module Schema
 const moduleSchema = new mongoose.Schema({
@@ -6,7 +6,10 @@ const moduleSchema = new mongoose.Schema({
   description: { type: String }
 });
 
-// Define Module Model
-const Module = mongoose.model('Module', moduleSchema);
+const getModuleModel = async (tenant) => {
+  let dbName = "lumini_" + tenant;
+  let db = await mongoose.connection.useDb(dbName).asPromise();
+  return db.model('Module', moduleSchema);
+};
 
-module.exports = Module;
+export default getModuleModel;

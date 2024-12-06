@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 // Define User schema
 const userSchema = new mongoose.Schema({
@@ -6,7 +6,10 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true }
 });
 
-// Create User model
-const User = mongoose.model('User', userSchema);
+const getUserModel = async () => {
+  const dbName = 'lumini_users';
+  let db = await mongoose.connection.useDb(dbName).asPromise();
+  return db.model('User', userSchema);
+};
 
-module.exports = User;
+export default getUserModel;
